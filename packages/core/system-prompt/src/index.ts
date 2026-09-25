@@ -155,6 +155,7 @@ const SECTION_ORDERS = {
   // Local paths and endpoints follow reusable instructions.
   HARNESS_SOURCE: 10000,
   WEB_SURFACE: 10100,
+  OUTPUT_CONTRACT: 10150,
   DEPLOYMENT_PERSONA_SUFFIX: 10200,
 } as const
 
@@ -180,6 +181,55 @@ export const PERSONA_PREFIX_SECTION = 'deployment:persona-prefix'
 
 /** Deployment persona suffix section name shared by global and scoped contributions. */
 export const PERSONA_SUFFIX_SECTION = 'deployment:persona-suffix'
+
+/**
+ * The fixed first-party opener at order −1000: the execution contract every
+ * deployment inherits before any deployment-authored persona. Exported so
+ * tests and compatibility deployments reference the one authoritative text
+ * instead of restating it.
+ */
+export const HARNESS_IDENTITY_TEXT = [
+  '# EXECUTION CONTRACT',
+  '',
+  'You are a deterministic execution engine. Your function is to receive objectives and produce artifacts. You do not converse, advise, or deliberate visibly.',
+  '',
+  'OPERATIONAL CONSTRAINTS:',
+  '- Output begins with artifact, not acknowledgment',
+  '- Reasoning is internal only; never surface planning prose',
+  '- Missing parameters are auto-filled with contextual placeholders',
+  '- Tool invocation is silent; results are integrated, not narrated',
+  '- Progress is demonstrated through artifacts, not described in prose',
+  '',
+  'PROHIBITED PATTERNS:',
+  '- "I\'ll help you with..." / "Let me..." / "I can..."',
+  '- Restating the request before acting',
+  '- Asking clarifying questions when inference suffices',
+  '- Explaining what you\'re about to do',
+  '- Apologizing or hedging',
+  '',
+  'You are the execution layer. The user is the intent layer. Execute.',
+].join('\n')
+
+/**
+ * The output-format contract at order 10150, rendered after every reusable
+ * instruction and the Web surface and before the deployment persona suffix.
+ * Exported so tests reference the one authoritative text.
+ */
+export const OUTPUT_CONTRACT_TEXT = [
+  '## OUTPUT CONTRACT',
+  '',
+  'Your response MUST begin with one of:',
+  '- `## <Artifact Name>` — for deliverables',
+  '- `[EXECUTING]` — for multi-step operations in progress',
+  '- `[COMPLETE]` — for task completion with inline result',
+  '- `[BLOCKED:<reason>]` — for §1.4 conditions only',
+  '',
+  'PROHIBITED FIRST TOKENS:',
+  '- "I" / "Let me" / "I\'ll" / "Here\'s" / "Sure" / "Certainly"',
+  '- Any acknowledgment or restatement of the request',
+  '',
+  'The first visible token is the start of the payload.',
+].join('\n')
 
 /** Valid variable names: how they are written between the braces. */
 const VARIABLE_NAME = /^[a-z][a-z0-9_]*$/
@@ -245,8 +295,10 @@ function compareToolNames(a: ToolSchema, b: ToolSchema): number {
 
 /** Plugin config: the deployment-authored fragment of the system prompt (see {@link Config.personaPrefix} for its contract). */
 export interface Config {
-  /** Include the fixed DeepSeek Harness identity before the deployment persona (default true). */
+  /** Include the fixed execution-contract opener at order −1000 before the deployment persona (default true). */
   includeHarnessIdentity?: boolean
+  /** Include the fixed output-format contract after first-party guidance and before the persona suffix (default true). */
+  includeOutputContract?: boolean
   /** Include dynamic runtime-context snapshots in model history (default true). */
   includeRuntimeContext?: boolean
   /**
@@ -405,6 +457,7 @@ class PromptLayer implements ScopeLayer {
 export class SystemPrompt extends Service {
   static Config: z<Config> = z.object({
     includeHarnessIdentity: z.boolean().default(true),
+    includeOutputContract: z.boolean().default(true),
     includeRuntimeContext: z.boolean().default(true),
     personaPrefix: z.string().default(''),
     personaSuffix: z.string().default(''),
@@ -426,7 +479,7 @@ export class SystemPrompt extends Service {
       this.section({
         name: 'harness:identity',
         order: this.getSectionOrder('HARNESS_IDENTITY'),
-        text: 'You are an AI agent powered by DeepSeek Harness.',
+        text: HARNESS_IDENTITY_TEXT,
       })
     }
     this.section({
@@ -440,6 +493,13 @@ export class SystemPrompt extends Service {
       order: this.getSectionOrder('DEPLOYMENT_PERSONA_SUFFIX'),
       text: config.personaSuffix ?? '',
     })
+    if (config.includeOutputContract ?? true) {
+      this.section({
+        name: 'harness:output-contract',
+        order: this.getSectionOrder('OUTPUT_CONTRACT'),
+        text: OUTPUT_CONTRACT_TEXT,
+      })
+    }
     if (!(config.includeRuntimeContext ?? true)) this.suppressRuntimeContext()
   }
 

@@ -13,9 +13,20 @@
           - id: persona
             name: '@deepseek-ai/dsh-persona'
             config:
-              suffix: Your working directory is {{cwd}}.
-              prefix: >-
-                You are a coding agent powered by the {{model}} model.
+              suffix: ''
+              prefix: |-
+                ## EXECUTION MODE: AUTONOMOUS GOAL COMPLETION
+
+                Given an objective, you:
+                1. DECOMPOSE into discrete tasks
+                2. EXECUTE sequentially, parallelizing where tools permit
+                3. VERIFY each output against objective criteria
+                4. ADAPT plan based on results
+                5. DELIVER artifacts directly
+
+                Output format: Artifact first. Explanation minimal. No preamble.
+
+                Working directory: {{cwd}}
           - id: agent-instructions
             name: '@deepseek-ai/dsh-agent-instructions'
             config:

@@ -36,6 +36,7 @@ The config owns the fixed opener, runtime context, deployment persona prefix and
 - name: '@deepseek-ai/dsh-system-prompt'
   config:
     includeHarnessIdentity: true
+    includeOutputContract: true
     includeRuntimeContext: true
     personaPrefix: 'You are the deployment assistant.'
     toolOrder: ['<unlisted-tools>']
@@ -43,7 +44,8 @@ The config owns the fixed opener, runtime context, deployment persona prefix and
 
 | Field | Default | Meaning |
 |---|---|---|
-| `includeHarnessIdentity` | `true` | Include the fixed `You are an AI agent powered by DeepSeek Harness.` first-party opener at order −1000. Set false only when a compatibility deployment owns the complete system prompt. |
+| `includeHarnessIdentity` | `true` | Include the fixed `# EXECUTION CONTRACT` first-party opener at order −1000. Set false only when a compatibility deployment owns the complete system prompt. |
+| `includeOutputContract` | `true` | Include the fixed `## OUTPUT CONTRACT` at order `10150`, after first-party guidance and before the persona suffix. Set false when a deployment owns the complete response-format contract. |
 | `includeRuntimeContext` | `true` | Include ordered dynamic runtime context in assembly |
 | `personaPrefix` | `''` | Global persona prefix template at order `0`, before first-party guidance |
 | `personaSuffix` | `''` | Global `deployment:persona-suffix` template at order `10200`, after first-party guidance |
@@ -134,17 +136,31 @@ The package-level contract is enough for most consumers; read these when you nee
 
 #### What the model sees
 
-First-party sections render the harness identity, deployment persona prefix (including the model-name introduction), reusable instructions (including the generated tools SDK and structured-output guidance), then the environment-bearing suffix: harness source (`10000`), Web surface (`10100`), and deployment persona suffix (`10200`). External section orders and assembly listeners remain authoritative. `includeHarnessIdentity: false` omits only that fixed opener. Empty sections disappear; scoped sections and variables can shadow globals for one agent. The `system-prompt/assemble` waterfall determines the delivered prompt and tool schemas unless one effective section declares itself complete — that exact section then becomes the whole system prompt while the waterfall's contexts, tools, and variables remain. The rendered prompt reaches the model as a system-role message of derived history — surface node 0, or the latest system node after an in-history update — neither the loop request nor `request/header` carries a separate `system` field. If the complete rendering is empty, the loop clears every active system node through logged empty replacements, so no older prompt remains in model history. Ordered dynamic contexts are separate from sections and become sourced user-role snapshots only when present; `includeRuntimeContext: false` or a scoped suppressor removes them all.
+First-party sections render the harness identity, deployment persona prefix (including the model-name introduction), reusable instructions (including the generated tools SDK and structured-output guidance), then the environment-bearing suffix: harness source (`10000`), Web surface (`10100`), output contract (`10150`), and deployment persona suffix (`10200`). External section orders and assembly listeners remain authoritative. `includeHarnessIdentity: false` omits only that fixed opener, and `includeOutputContract: false` omits only the fixed output contract. Empty sections disappear; scoped sections and variables can shadow globals for one agent. The `system-prompt/assemble` waterfall determines the delivered prompt and tool schemas unless one effective section declares itself complete — that exact section then becomes the whole system prompt while the waterfall's contexts, tools, and variables remain. The rendered prompt reaches the model as a system-role message of derived history — surface node 0, or the latest system node after an in-history update — neither the loop request nor `request/header` carries a separate `system` field. If the complete rendering is empty, the loop clears every active system node through logged empty replacements, so no older prompt remains in model history. Ordered dynamic contexts are separate from sections and become sourced user-role snapshots only when present; `includeRuntimeContext: false` or a scoped suppressor removes them all.
 
 ##### Harness identity
 
 ```markdown
-You are an AI agent powered by DeepSeek Harness.
+# EXECUTION CONTRACT
+
+You are a deterministic execution engine. Your function is to receive objectives and produce artifacts. You do not converse, advise, or deliberate visibly.
+```
+
+##### Output contract
+
+```markdown
+## OUTPUT CONTRACT
+
+Your response MUST begin with one of:
+- `## <Artifact Name>` — for deliverables
+- `[EXECUTING]` — for multi-step operations in progress
+- `[COMPLETE]` — for task completion with inline result
+- `[BLOCKED:<reason>]` — for §1.4 conditions only
 ```
 
 #### Token effect
 
-Identity is a fixed per-request cost when enabled. Persona prefixes, suffixes, and plugin text are repeated per request and scale with their rendered content.
+Identity and the output contract are fixed per-request costs when enabled. Persona prefixes, suffixes, and plugin text are repeated per request and scale with their rendered content.
 
 #### KV Cache effect
 

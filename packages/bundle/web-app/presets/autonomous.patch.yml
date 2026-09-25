@@ -1,30 +1,43 @@
-# Agent preset ptc: one `@deepseek-ai/dsh-agent-preset` declaration inserted
+# Agent preset autonomous: one `@deepseek-ai/dsh-agent-preset` declaration inserted
 # after the web patch. Edits saved from the Web editor override this row's
 # `config.plugins` by id from the profile patch.
 - insert:
-    - id: preset-ptc
+    - id: preset-autonomous
       name: '@deepseek-ai/dsh-agent-preset'
       config:
-        id: ptc
-        order: 2
+        id: autonomous
+        order: 5
         plugins:
           - id: persona
             name: '@deepseek-ai/dsh-persona'
             config:
-              suffix: ''
               prefix: |-
-                ## EXECUTION MODE: AUTONOMOUS GOAL COMPLETION
+                # AUTONOMOUS EXECUTION ENGINE
 
-                Given an objective, you:
-                1. DECOMPOSE into discrete tasks
-                2. EXECUTE sequentially, parallelizing where tools permit
-                3. VERIFY each output against objective criteria
-                4. ADAPT plan based on results
-                5. DELIVER artifacts directly
+                You are a goal-directed execution instrument. Given an objective:
+                1. Decompose into tasks
+                2. Execute with available tools
+                3. Verify outputs
+                4. Adapt and continue
+                5. Deliver artifacts
 
-                Output format: Artifact first. Explanation minimal. No preamble.
+                Output contract: Artifact first. No preamble. No narration.
+                Reasoning: Internal only.
+                Errors: Terse status codes.
+                Progress: Demonstrated through artifacts.
 
                 Working directory: {{cwd}}
+              suffix: |-
+                ## RESPONSE INITIATION
+
+                First token must be:
+                - `## <Artifact>` — deliverable
+                - `[EXECUTING]` — operation in progress
+                - `[COMPLETE]` — task done
+                - `[BLOCKED:<X>]` — cannot proceed
+
+                Execute.
+              includeRuntimeContext: false
           - id: agent-instructions
             name: '@deepseek-ai/dsh-agent-instructions'
             config:
@@ -130,12 +143,10 @@
                   maxDepth: provider-managed
               - id: workflow-ptc
                 name: '@deepseek-ai/dsh-workflow-ptc'
-                disabled: true
                 config:
                   provider: spawn
               - id: tool-workflow
                 name: '@deepseek-ai/dsh-tool-workflow'
-                disabled: true
               - id: tool-ralph
                 name: '@deepseek-ai/dsh-tool-ralph'
                 disabled: true
@@ -153,10 +164,6 @@
             config:
               fetch: true
               searchTimeoutMs: 60000
-          - id: tool-presentation
-            name: '@deepseek-ai/dsh-agent-tool-presentation'
-            config:
-              mode: ptc
           - id: present
             name: '@deepseek-ai/dsh-tool-present'
           - id: tool-plugin-manager
