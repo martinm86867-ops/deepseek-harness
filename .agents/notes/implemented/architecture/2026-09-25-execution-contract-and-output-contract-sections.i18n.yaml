@@ -1,6 +1,22 @@
-# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
-# side as of the last confirmed-consistent state. Both languages carry equal authority;
-# after editing either side, bring the other along and re-record with:
+# Bilingual-pair consistency record for 2026-09-25-execution-contract-and-output-contract-sections.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-09-25-execution-contract-and-output-contract-sections.md
-2026-09-25-execution-contract-and-output-contract-sections.md: 800c140df59f83c30b11d1cca94037273570426e
-2026-09-25-execution-contract-and-output-contract-sections.zh.md: 2ece8c5e309bec8be27ec9a0a4ab7cb3b1e68cd6
+/agent-note-execution-contract-identity-and-a-fixed-output-contract:
+  en: 3dd4e30bf759d9ef
+  zh: 3980aeb7292c23b6
+/agent-note-execution-contract-identity-and-a-fixed-output-contract/problem:
+  en: 02216d15c441c845
+  zh: cad286b4213c42a2
+/agent-note-execution-contract-identity-and-a-fixed-output-contract/decision:
+  en: 6f6d720c3aaf05f1
+  zh: 96a2f01b1048f95c
+/agent-note-execution-contract-identity-and-a-fixed-output-contract/alternatives-considered:
+  en: 5d27d730ad8ad6a9
+  zh: 9600d460e398910b
+/agent-note-execution-contract-identity-and-a-fixed-output-contract/consequences:
+  en: ee21d6ab7891b261
+  zh: e0d76127e9b40951
+/agent-note-execution-contract-identity-and-a-fixed-output-contract/testing:
+  en: 0bc6c4d21033b180
+  zh: d4a8744efd92279f
